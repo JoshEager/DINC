@@ -1,0 +1,62 @@
+services:
+  openwebui:
+    container_name: openwebui
+    image: ghcr.io/open-webui/open-webui:main-slim
+    restart: unless-stopped
+    volumes:
+      - ./openwebui:/app/backend/data
+    environment:
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+    network_mode: service:tailscale
+    depends_on:
+      - tailscale
+
+  # Tailscale is used for networking (highly recommend learning it--it's an awesome tool)
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: ai-stack
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_STATE_DIR: "/var/lib/tailscale"
+      TS_SERVE_CONFIG: "/config/serve.json"
+    volumes:
+      - ./tailscale/state:/var/lib/tailscale
+      - ./tailscale/config:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+    networks: 
+      - ai-stack
+
+  # Searxng is used for web search. It is a search engine. 
+  searxng:
+    container_name: searxng-core
+    image: docker.io/searxng/searxng:latest
+    restart: unless-stopped
+    environment:
+      SEARXNG_HOST: "[::]"
+      SEARXNG_PORT: 8080
+    volumes:
+      - ./searxng/config:/etc/searxng/:rw
+      - ./searxng/data:/var/cache/searxng/
+    networks:
+      - ai-stack
+
+  # Valkey is the caching system for searxng. 
+  valkey:
+    container_name: searxng-valkey
+    image: docker.io/valkey/valkey:9-alpine
+    command: valkey-server --save 30 1 --loglevel warning
+    restart: always
+    volumes:
+      - ./valkey/data:/data/
+    networks:
+      - ai-stack
+
+networks:
+  ai-stack:
+

@@ -1,0 +1,5 @@
+openwebui/
+searxng/data
+tailscale/state
+valkey/data
+.env
