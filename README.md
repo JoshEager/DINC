@@ -1,7 +1,5 @@
-# AI-Stack is the Easiest Way to Self Host your own Chat-GPT
+# DINC is the Easiest Way to Self Host your own Chat-GPT
 There are many ways to self host your own chat gpt, but most of them are not very user friendly. Furthermore, if you want to be able to use what you host outside of your home network, you also have to figure out how to expose it to the public internet securely. This project handles most of that setup work for you and is preconfigured with very sensible defaults.
-
-Please excuse the horribly uncreative name.
 
 # Quick Start
 
@@ -23,14 +21,15 @@ If you don't already have docker installed on whatever machine you are planning 
 ## Project Setup
 All you need to do to setup this project is clone this repository and run setup.py
 ```bash
-git clone project-url && cd project-name
+git clone https://github.com/JoshEager/DINC.git && cd DINC
 ```
 ```bash
 python setup.py
 ```
 The script will ask for your tailscale auth key. Please note that it will not show up when you type (or paste) for security reasons. 
-After running the setup script, all you need to do is run the following command, and your stack should be available at `https://ai-stack.<your tailnet>.ts.net`
+After running the setup script, all you need to do is run the following command, and your stack should be available at `https://dinc.<your tailnet>.ts.net`
 ```bash
 docker compose up -d
 ``` 
 
+# Features

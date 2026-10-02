@@ -1,5 +1,5 @@
 """
-To get started with your own ai-stack, simply run this python script and it will
+To get start playing with your dinc, simply run this python script and it will
 guide you through the process. 
 
 It starts by making the directory structure required for docker compose. Then,

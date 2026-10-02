@@ -15,7 +15,7 @@ services:
   tailscale:
     image: tailscale/tailscale:latest
     container_name: tailscale
-    hostname: ai-stack
+    hostname: dinc
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_STATE_DIR: "/var/lib/tailscale"
