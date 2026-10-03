@@ -41,7 +41,10 @@ if not openrouter_api_key:
 image_gen_model = input("Image generation model (blank for default of meta/muse-image, configurable in openwebui): ").strip()
 if not image_gen_model:
     image_gen_model = "meta/muse-image"
-
+project_name = input("Project name (for docker compose): ") # Project name are important if you host more than one instance of dinc
+if not project_name:
+    print("You must provide a project name!")
+    sys.exit(1)
 
 webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
@@ -58,6 +61,7 @@ env_contents = (
     f"WEBUI_SECRET_KEY={webui_secret_key}\n"
     f"OPENROUTER_API_KEY={openrouter_api_key}\n"
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
+    f"PROJECT_NAME={project_name}\n"
     "WEBUI_PERSIST_CONFIG=True"
 )
 env_file = project_dir / ".env"
