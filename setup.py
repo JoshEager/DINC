@@ -24,7 +24,8 @@ directories = [
     "openwebui", 
     "tailscale/state",
     "searxng/data",
-    "valkey/data"
+    "valkey/data",
+    "mcpo/workspace"
 ]
 for directory in directories:
     (project_dir / directory).mkdir(parents=True, exist_ok=True)
@@ -48,7 +49,7 @@ if not project_name:
 
 webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
-
+mcpo_api_key = token_hex(32)
 
 env_contents = (
     "# If you're chaning an environment variable related to open web ui config, please just don't bother.\n"
@@ -62,7 +63,8 @@ env_contents = (
     f"OPENROUTER_API_KEY={openrouter_api_key}\n"
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
     f"PROJECT_NAME={project_name}\n"
-    "WEBUI_PERSIST_CONFIG=True"
+    f"MCPO_API_KEY={mcpo_api_key}\n"
+    "WEBUI_PERSIST_CONFIG=True\n"
 )
 env_file = project_dir / ".env"
 if env_file.exists():

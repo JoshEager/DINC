@@ -66,6 +66,27 @@ services:
     networks:
       - ai-stack
 
+  # MCPO exposes all the custom tools for the model. If you want to add more tools,
+  # all you need to do is add the command to the mcpo config file. One caveat is 
+  # that the mcp server does need to be able to be run with either uvx or npx
+  # because that is that what is available within the mcpo image. 
+  mcpo:
+    image: ghcr.io/open-webui/mcpo:main
+    working_dir: /workspace
+    volumes:
+      - ./mcpo/config:/config
+      - ./mcpo/workspace:/workspace
+    command:
+      - --config
+      - /config/mcp_servers.json
+      - --port
+      - "8000"
+      - --api-key
+      - ${MCPO_API_KEY}
+      - --hot-reload
+    restart: unless-stopped
+    networks:
+      - ai-stack
+
 networks:
   ai-stack:
-

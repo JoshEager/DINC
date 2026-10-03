@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+
+    "bash": {
+      "command": "npx",
+      "args": ["-y", "bash-mcp"]
+    }
+
+  }
+}
