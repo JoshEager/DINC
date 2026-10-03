@@ -8,12 +8,14 @@ To get started, the first thing you need to do is create a free [tailscale](http
 
 Then, you need to generate an auth key. We will use this later in the setup. To do this, go to your [admin dashboard](https://console.tailscale.com) and click Settings>Keys>Generate Auth Key. Add a description and leave everything else default (unless you know what you're doing). Then simply copy the key it generates to your clipboard. Make sure not to lose this key from your clipboard as you won't be able to see it again. If you don't already have clipboard history on, I would recommend turning it on before copying this. If you don't want to do that, you can simply paste it into a text file to be safe.
 
-You may also want to check that MagicDNS is enabled for your tailnet (not required, but nice to have).
+You may also want to check that MagicDNS is enabled for your tailnet (not required, but nice to have). You also *must* **enable https on your tailnet**. You can do that by going to your [admin dashboard](https://console.tailscale.com) and clicking Settings>General>Https>Enable https 
 
 ## Open Router Setup
 You're going to want to sign up for [open router](https://openrouter.ai) if you haven't already. It is my recommended way of actually connecting to models that other people host. If you have really good hardware, maybe you could consider modifying this setup to also have an ollama instance to self host your models, though I honestly have been there and don't recommend it for real world chatting.
 
 Next, you'll need to generate an api key for use within Open Web UI. To do this, go to your [open router workspace](https://openrouter.ai/workspaces/default) and click "New Key". Then follow the key creation wizard and copy your key. Later, the setup script for this project will ask for this key and we will paste it in. 
+
+It doesn't cost anything to make a key on open router, and there is a 100% free tier. However, I highly recommend putting at least 10 dollars on your key. Once you do this, your free tier limit actually expands substancially. Also, if you choose the right models, 10 dollars can last you a shockingly long amount of time. 
 
 ## Docker Setup
 If you don't already have docker installed on whatever machine you are planning on running this stack from, make sure you do that. A convenient guide can be found [here](https://docs.docker.com/engine/install/). You will also need docker compose. For installing docker compose, you can follow the guide [here](https://docs.docker.com/compose/install/) for your platform.
@@ -33,3 +35,11 @@ docker compose up -d
 ``` 
 
 # Features
+## Open Web UI With Sensible defaults
+DINC configures and runs an instance of [Open WebUI](https://github.com/open-webui/open-webui). Open WebUI is essentially a clone of Chat-GPT's frontend, but with way more features and way cooler. It also keeps your chats privately stored on your computer. The features of Open WebUI are almost limitless. 
+
+## Give Your LLMS Their Own Sandboxed Linux Machine
+By default, DINC configures and runs the [mcp-bash](https://github.com/tinywind/bash-mcp) MCP server from npx. It also configures Open Web UI to connnect to that mcp server. Your LLM will be able to install its own packages, create files, and even make github PRs if you ask it to.
+
+## Easily Add More MCPs
+Extending your DINC installtion with more MCPs is very easy. All you need to do is open your mcpo config file (located at mcpo/config/mcp_servers.json) and add an entry for the mcp server you would like to run. One caveat here is that it needs to be able to be run with either uv or npx. 
