@@ -13,6 +13,7 @@ in a .env file.
 from getpass import getpass
 from pathlib import Path
 from secrets import token_hex
+import json
 import sys
 
 # Make sure that no matter where the script is being ran from, it always works relative
@@ -51,6 +52,25 @@ webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
 mcpo_api_key = token_hex(32)
 
+webui_tool_connections = json.dumps([
+  {
+    "type": "openapi",
+    "url": "http://mcpo:8000/bash",
+    "spec_type": "url",
+    "spec": "",
+    "path": "openapi.json",
+    "auth_type": "bearer",
+    "key": f"{mcpo_api_key}",
+    "config": { "enable": "true" },
+    "info": {
+      "id": "",
+      "name": "Bash",
+      "description": "Gives an agent the ability to run bash commands on its own machine."
+    }
+  }
+], indent=None)
+
+
 env_contents = (
     "# If you're chaning an environment variable related to open web ui config, please just don't bother.\n"
     "# It probably won't update unless you have WEBUI_PERSIST_CONFIG=False set. \n"
@@ -64,6 +84,7 @@ env_contents = (
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
     f"PROJECT_NAME={project_name}\n"
     f"MCPO_API_KEY={mcpo_api_key}\n"
+    f"WEBUI_TOOL_CONNECTIONS='{webui_tool_connections}'\n"
     "WEBUI_PERSIST_CONFIG=True\n"
 )
 env_file = project_dir / ".env"
