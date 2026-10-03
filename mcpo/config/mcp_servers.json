@@ -3,7 +3,7 @@
 
     "bash": {
       "command": "npx",
-      "args": ["-y", "bash-mcp"]
+      "args": ["-y", "bash-mcp@1.1.0"]
     }
 
   }
