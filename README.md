@@ -26,7 +26,7 @@ git clone https://github.com/JoshEager/DINC.git && cd DINC
 ```bash
 python setup.py
 ```
-The script will ask for your tailscale auth key. Please note that it will not show up when you type (or paste) for security reasons. 
+The script will ask for your tailscale auth key as well as your open router auth key. Please note that it will not show up when you type (or paste) for security reasons. 
 After running the setup script, all you need to do is run the following command, and your stack should be available at `https://dinc.<your tailnet>.ts.net`
 ```bash
 docker compose up -d
