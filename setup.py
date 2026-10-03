@@ -48,18 +48,23 @@ searxng_secret_key = token_hex(32)
 
 
 env_contents = (
+    "# If you're chaning an environment variable related to open web ui config, please just don't bother.\n"
+    "# It probably won't update unless you have WEBUI_PERSIST_CONFIG=False set. \n"
+    "# Just change what you want in the web dashboard. If you do set the persist config variable, then you\n"
+    "# should know that any changes you make in the webui will not persist (why it's off by defualt)\n"
+    "# For develpment and testing purposes, WEBUI_PERSIST_CONFIG is nice to make sure your defaults are good.\n"
+    "\n"
     f"TS_AUTHKEY={ts_auth_key}\n"
     f"WEBUI_SECRET_KEY={webui_secret_key}\n"
     f"OPENROUTER_API_KEY={openrouter_api_key}\n"
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
+    "WEBUI_PERSIST_CONFIG=True"
 )
 env_file = project_dir / ".env"
 if env_file.exists():
     print("Env file already exists! It was left unchanged.")
     sys.exit(1)
 with env_file.open('x', encoding="utf-8") as f:
-    f.write("# If you're chaning an environment variable related to open web ui, please just don't bother." \
-    "\n# It probably won't update. Just change it in the web dashboard. \n\n")
     f.write(env_contents)
 
 

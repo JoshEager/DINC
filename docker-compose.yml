@@ -17,7 +17,7 @@ services:
       IMAGE_GENERATION_MODEL: ${IMAGE_GEN_MODEL}
       IMAGES_OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
       IMAGES_OPENAI_API_KEY: ${OPENROUTER_API_KEY}
-      ENABLE_PERSISTENT_CONFIG: "false"
+      ENABLE_PERSISTENT_CONFIG: ${WEBUI_PERSIST_CONFIG}
     network_mode: service:tailscale
     depends_on:
       - tailscale
