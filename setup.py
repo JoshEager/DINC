@@ -34,6 +34,13 @@ ts_auth_key = getpass("Paste your tailscale auth key: ").strip()
 if not ts_auth_key:
     print("Auth key must not be of length zero!")
     sys.exit(1)
+openrouter_api_key = getpass("Paste your OpenRouter API key: ").strip()
+if not openrouter_api_key:
+    print("Open router api key must not be of length zero!")
+    sys.exit(1)
+image_gen_model = input("Image generation model (blank for default of meta/muse-image, configurable in openwebui): ").strip()
+if not image_gen_model:
+    image_gen_model = "meta/muse-image"
 
 
 webui_secret_key = token_hex(32)
@@ -43,12 +50,16 @@ searxng_secret_key = token_hex(32)
 env_contents = (
     f"TS_AUTHKEY={ts_auth_key}\n"
     f"WEBUI_SECRET_KEY={webui_secret_key}\n"
+    f"OPENROUTER_API_KEY={openrouter_api_key}\n"
+    f"IMAGE_GEN_MODEL={image_gen_model}\n"
 )
 env_file = project_dir / ".env"
 if env_file.exists():
     print("Env file already exists! It was left unchanged.")
     sys.exit(1)
 with env_file.open('x', encoding="utf-8") as f:
+    f.write("# If you're chaning an environment variable related to open web ui, please just don't bother." \
+    "\n# It probably won't update. Just change it in the web dashboard. \n\n")
     f.write(env_contents)
 
 

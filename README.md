@@ -13,7 +13,7 @@ You may also want to check that MagicDNS is enabled for your tailnet (not requir
 ## Open Router Setup
 You're going to want to sign up for [open router](https://openrouter.ai) if you haven't already. It is my recommended way of actually connecting to models that other people host. If you have really good hardware, maybe you could consider modifying this setup to also have an ollama instance to self host your models, though I honestly have been there and don't recommend it for real world chatting.
 
-Next, you'll need to generate an api key for use within Open Web UI. To do this, go to your [open router workspace](https://openrouter.ai/workspaces/default) and click "New Key". Then follow the key creation wizard and copy your key. We will use this later inside the Open Web UI app. Unfortunately, I don't know of any way to configure the Open Web UI docker container to automatically have open router as a provider with this key. If anybody knows of a way to do this, please let me know.
+Next, you'll need to generate an api key for use within Open Web UI. To do this, go to your [open router workspace](https://openrouter.ai/workspaces/default) and click "New Key". Then follow the key creation wizard and copy your key. Later, the setup script for this project will ask for this key and we will paste it in. 
 
 ## Docker Setup
 If you don't already have docker installed on whatever machine you are planning on running this stack from, make sure you do that. A convenient guide can be found [here](https://docs.docker.com/engine/install/). You will also need docker compose. For installing docker compose, you can follow the guide [here](https://docs.docker.com/compose/install/) for your platform.
