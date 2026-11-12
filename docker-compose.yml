@@ -2,7 +2,7 @@ name: ${PROJECT_NAME}
 
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:main-slim
+    image: ghcr.io/open-webui/open-webui:main
     restart: unless-stopped
     volumes:
       - ./openwebui:/app/backend/data
