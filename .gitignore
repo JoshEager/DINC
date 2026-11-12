@@ -5,3 +5,4 @@ valkey/data
 .env
 searxng/config/settings.yml
 mcpo/workspace
+open-terminal/

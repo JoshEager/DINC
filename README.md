@@ -39,10 +39,12 @@ docker compose up -d
 DINC configures and runs an instance of [Open WebUI](https://github.com/open-webui/open-webui). Open WebUI is essentially a clone of Chat-GPT's frontend, but with way more features and way cooler. It also keeps your chats privately stored on your computer. The features of Open WebUI are almost limitless. 
 
 ## Give Your LLMS Their Own Sandboxed Linux Machine
-By default, DINC configures and runs the [mcp-bash](https://github.com/tinywind/bash-mcp) MCP server from npx. It also configures Open Web UI to connnect to that mcp server. Your LLM will be able to install its own packages, create files, and even make github PRs if you ask it to.
+By default, DINC configures and runs [Open Terminal](https://github.com/open-webui/open-terminal) and connects it to Open Web UI through the dedicated terminal integration. Your LLM gets a full Linux environment where it can install its own packages, create files, run code, and even make github PRs if you ask it to. Open Terminal also adds a file browser and an interactive terminal pane to the UI.
+
+DINC also keeps a [bash MCP](https://github.com/tinywind/bash-mcp) server running through MCPO. It shows up in Open Web UI as **MCP Manager**, giving you a second sandboxed shell and a ready-made place to add more MCP servers.
 
 ## Easily Add More MCPs
-Extending your DINC installtion with more MCPs is very easy. All you need to do is open your mcpo config file (located at mcpo/config/mcp_servers.json) and add an entry for the mcp server you would like to run. One caveat here is that it needs to be able to be run with either uv or npx. 
+Extending your DINC installtion with more MCPs is very easy. All you need to do is open your mcpo config file (located at mcpo/config/mcp_servers.json) and add an entry for the mcp server you would like to run. One caveat here is that it needs to be able to be run with either uvx or npx. 
 
 # License
 The MIT License (MIT)

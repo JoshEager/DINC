@@ -20,9 +20,11 @@ services:
       IMAGES_OPENAI_API_KEY: ${OPENROUTER_API_KEY}
       ENABLE_PERSISTENT_CONFIG: ${WEBUI_PERSIST_CONFIG}
       TOOL_SERVER_CONNECTIONS: ${WEBUI_TOOL_CONNECTIONS}
+      TERMINAL_SERVER_CONNECTIONS: ${WEBUI_TERMINAL_CONNECTIONS}
     network_mode: service:tailscale
     depends_on:
       - tailscale
+      - open-terminal
 
   # Tailscale is used for networking (highly recommend learning it--it's an awesome tool)
   tailscale:
@@ -64,6 +66,20 @@ services:
     restart: always
     volumes:
       - ./valkey/data:/data/
+    networks:
+      - ai-stack
+
+  # Open Terminal is the model's sandboxed Linux machine. It can install packages,
+  # create and edit files, run code, and browse the web from inside the container.
+  # Open WebUI connects to it through the dedicated terminal integration, which also
+  # adds a file browser and an interactive terminal pane to the UI.
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:latest
+    restart: unless-stopped
+    volumes:
+      - ./open-terminal:/home/user
+    environment:
+      OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY}
     networks:
       - ai-stack
 

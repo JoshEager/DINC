@@ -26,7 +26,8 @@ directories = [
     "tailscale/state",
     "searxng/data",
     "valkey/data",
-    "mcpo/workspace"
+    "mcpo/workspace",
+    "open-terminal"
 ]
 for directory in directories:
     (project_dir / directory).mkdir(parents=True, exist_ok=True)
@@ -51,6 +52,7 @@ if not project_name:
 webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
 mcpo_api_key = token_hex(32)
+open_terminal_api_key = token_hex(32)
 
 webui_tool_connections = json.dumps([
   {
@@ -64,9 +66,20 @@ webui_tool_connections = json.dumps([
     "config": { "enable": "true" },
     "info": {
       "id": "",
-      "name": "Bash",
-      "description": "Gives an agent the ability to run bash commands on its own machine."
+      "name": "MCP Manager",
+      "description": "Manages the model's MCP servers and provides a sandboxed bash shell for running commands."
     }
+  }
+], indent=None)
+
+webui_terminal_connections = json.dumps([
+  {
+    "id": "open-terminal",
+    "url": "http://open-terminal:8000",
+    "key": f"{open_terminal_api_key}",
+    "name": "Open Terminal",
+    "auth_type": "bearer",
+    "config": { "access_grants": [] }
   }
 ], indent=None)
 
@@ -84,7 +97,9 @@ env_contents = (
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
     f"PROJECT_NAME={project_name}\n"
     f"MCPO_API_KEY={mcpo_api_key}\n"
+    f"OPEN_TERMINAL_API_KEY={open_terminal_api_key}\n"
     f"WEBUI_TOOL_CONNECTIONS='{webui_tool_connections}'\n"
+    f"WEBUI_TERMINAL_CONNECTIONS='{webui_terminal_connections}'\n"
     "WEBUI_PERSIST_CONFIG=True\n"
 )
 env_file = project_dir / ".env"
