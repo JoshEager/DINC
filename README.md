@@ -46,7 +46,7 @@ DINC also keeps a [bash MCP](https://github.com/tinywind/bash-mcp) server runnin
 ## Easily Add More MCPs
 Extending your DINC installtion with more MCPs is very easy. All you need to do is open your mcpo config file (located at mcpo/config/mcp_servers.json) and add an entry for the mcp server you would like to run. One caveat here is that it needs to be able to be run with either uvx or npx. 
 
-If you enable the MCP Manager tool in Open WebUI, you can also ask a model to add the tool for itself. You will have to manually register it with Open WebUI though. 
+If you enable the MCP Manager tool in Open WebUI, you can also ask a model to add a tool for itself. You will have to manually register it with Open WebUI though, and you should make sure to use a competent model. 
 
 # License
 The MIT License (MIT)
