@@ -29,7 +29,6 @@ directories = [
     "openwebui", 
     "tailscale/state",
     "searxng/data",
-    "valkey/data",
     "open-terminal",
     "hermes"
 ]

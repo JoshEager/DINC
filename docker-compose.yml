@@ -62,16 +62,6 @@ services:
     networks:
       - ai-stack
 
-  # Valkey is the caching system for searxng. 
-  valkey:
-    image: docker.io/valkey/valkey:9-alpine
-    command: valkey-server --save 30 1 --loglevel warning
-    restart: always
-    volumes:
-      - ./valkey/data:/data/
-    networks:
-      - ai-stack
-
   # Open Terminal is the model's sandboxed Linux machine. It can install packages,
   # create and edit files, run code, and browse the web from inside the container.
   # Open WebUI connects to it through the dedicated terminal integration, which also
