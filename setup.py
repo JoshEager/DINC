@@ -17,6 +17,7 @@ from getpass import getpass
 from pathlib import Path
 from secrets import token_hex
 import json
+import os
 import sys
 
 # Make sure that no matter where the script is being ran from, it always works relative
@@ -29,8 +30,8 @@ directories = [
     "tailscale/state",
     "searxng/data",
     "valkey/data",
-    "mcpo/workspace",
-    "open-terminal"
+    "open-terminal",
+    "hermes"
 ]
 for directory in directories:
     (project_dir / directory).mkdir(parents=True, exist_ok=True)
@@ -38,24 +39,34 @@ for directory in directories:
 env_file = project_dir / ".env"
 
 
-def tool_connections_json(mcpo_api_key):
-    return json.dumps([
-      {
-        "type": "openapi",
-        "url": "http://mcpo:8000/bash",
-        "spec_type": "url",
-        "spec": "",
-        "path": "openapi.json",
-        "auth_type": "bearer",
-        "key": f"{mcpo_api_key}",
-        "config": { "enable": "true" },
-        "info": {
-          "id": "",
-          "name": "MCP Manager",
-          "description": "A bash environment from which the any LLM can manage the mcp servers exposed by mcpo. "
-        }
-      }
-    ], indent=None)
+def host_ids():
+    # Hermes remaps its internal user to these ids so the files it writes to
+    # ./hermes are owned by you on the host. Windows has no uid/gid, so fall back
+    # to the image default (the stack itself runs on Linux anyway).
+    if hasattr(os, "getuid"):
+        return str(os.getuid()), str(os.getgid())
+    return "10000", "10000"
+
+
+def install_copper(hermes_api_key):
+    # Copper is DINC's Hermes agent. It is installed as a regular Hermes profile
+    # in hermes/profiles/copper/, exactly like an agent you would add yourself,
+    # so it doubles as a working example. Its files are tracked in copper/ and
+    # only copied the first time around; existing files are never overwritten,
+    # so your edits in hermes/profiles/copper/ are safe across upgrades.
+    profile_dir = project_dir / "hermes" / "profiles" / "copper"
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("config.yaml", "SOUL.md", ".env"):
+        dest = profile_dir / name
+        if dest.exists():
+            continue
+        contents = (project_dir / "copper" / name).read_text(encoding="utf-8")
+        if name == ".env":
+            # Each profile's API requests are authenticated with that profile's
+            # own key, so Copper gets the same HERMES_API_KEY Open WebUI uses.
+            contents += f"API_SERVER_KEY={hermes_api_key}\n"
+        dest.write_text(contents, encoding="utf-8")
+        print(f"Installed Copper's {name} to hermes/profiles/copper/{name}.")
 
 
 def terminal_connections_json(open_terminal_api_key):
@@ -85,14 +96,15 @@ def parse_env_file(path):
 
 
 def unquote(value):
-    # Values like the json connection lists are stored wrapped in single quotes
-    # so docker compose does not mangle them. Strip them back off for parsing.
+    # In case someone wrapped a value in quotes by hand.
     if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
         return value[1:-1]
     return value
 
 
 def quote(value):
+    # Values like the json connection lists are stored wrapped in single quotes
+    # so docker compose does not mangle them.
     return f"'{value}'"
 
 
@@ -110,25 +122,21 @@ def migrate_env_file(path):
         entries["WEBUI_TERMINAL_CONNECTIONS"] = quote(terminal_connections_json(open_terminal_api_key))
         changes.append("added WEBUI_TERMINAL_CONNECTIONS")
 
-    # Older env files registered the mcpo tool connection under the name "Bash".
-    # Rename it to MCP Manager so it is clear what it is for.
-    raw_tool_connections = entries.get("WEBUI_TOOL_CONNECTIONS")
-    if raw_tool_connections:
-        try:
-            connections = json.loads(unquote(raw_tool_connections))
-        except json.JSONDecodeError:
-            print("Could not parse WEBUI_TOOL_CONNECTIONS! It was left unchanged.")
-        else:
-            renamed = False
-            for connection in connections:
-                info = connection.get("info", {})
-                if info.get("name") == "Bash":
-                    info["name"] = "MCP Manager"
-                    info["description"] = "Manages the model's MCP servers and provides a sandboxed bash shell for running commands."
-                    renamed = True
-            if renamed:
-                entries["WEBUI_TOOL_CONNECTIONS"] = quote(json.dumps(connections, indent=None))
-                changes.append("renamed the Bash tool connection to MCP Manager")
+    if not entries.get("HERMES_API_KEY"):
+        entries["HERMES_API_KEY"] = token_hex(32)
+        changes.append("added HERMES_API_KEY")
+
+    if "HERMES_UID" not in entries or "HERMES_GID" not in entries:
+        entries["HERMES_UID"], entries["HERMES_GID"] = host_ids()
+        changes.append("added HERMES_UID and HERMES_GID")
+
+    # The MCP Manager (mcpo) was removed from dinc. Drop the settings it used.
+    removed = set()
+    for key in ("MCPO_API_KEY", "WEBUI_TOOL_CONNECTIONS"):
+        if key in entries:
+            del entries[key]
+            removed.add(key)
+            changes.append(f"removed {key} (the MCP Manager is no longer part of dinc)")
 
     if not changes:
         print("Env file is already up to date! It was left unchanged.")
@@ -142,6 +150,8 @@ def migrate_env_file(path):
         stripped = line.strip()
         if stripped and not stripped.startswith("#") and "=" in line:
             key = line.split("=", 1)[0]
+            if key in removed:
+                continue
             if key in entries:
                 new_lines.append(f"{key}={entries[key]}")
                 written.add(key)
@@ -160,6 +170,7 @@ def migrate_env_file(path):
 # it in place instead of walking through the first time setup prompts again.
 if env_file.exists():
     migrate_env_file(env_file)
+    install_copper(unquote(parse_env_file(env_file)["HERMES_API_KEY"]))
     sys.exit(0)
 
 
@@ -181,8 +192,9 @@ if not project_name:
 
 webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
-mcpo_api_key = token_hex(32)
 open_terminal_api_key = token_hex(32)
+hermes_api_key = token_hex(32)
+hermes_uid, hermes_gid = host_ids()
 
 env_contents = (
     "# If you're chaning an environment variable related to open web ui config, please just don't bother.\n"
@@ -196,14 +208,17 @@ env_contents = (
     f"OPENROUTER_API_KEY={openrouter_api_key}\n"
     f"IMAGE_GEN_MODEL={image_gen_model}\n"
     f"PROJECT_NAME={project_name}\n"
-    f"MCPO_API_KEY={mcpo_api_key}\n"
     f"OPEN_TERMINAL_API_KEY={open_terminal_api_key}\n"
-    f"WEBUI_TOOL_CONNECTIONS='{tool_connections_json(mcpo_api_key)}'\n"
+    f"HERMES_API_KEY={hermes_api_key}\n"
+    f"HERMES_UID={hermes_uid}\n"
+    f"HERMES_GID={hermes_gid}\n"
     f"WEBUI_TERMINAL_CONNECTIONS='{terminal_connections_json(open_terminal_api_key)}'\n"
     "WEBUI_PERSIST_CONFIG=True\n"
 )
 with env_file.open('x', encoding="utf-8") as f:
     f.write(env_contents)
+
+install_copper(hermes_api_key)
 
 
 # The searxng secret key does not support being loaded via environment variables.

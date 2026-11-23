@@ -1,0 +1,9 @@
+# Copper's Hermes config. setup.py copies this to hermes/profiles/copper/config.yaml
+# on first setup. After that, edit that copy (not this file) and run
+# `docker compose restart hermes`. Anything not set here uses Hermes's defaults.
+# For every available setting, see Hermes's cli-config.yaml.example:
+# https://github.com/NousResearch/hermes-agent/blob/main/cli-config.yaml.example
+
+model:
+  provider: "openrouter"
+  default: "deepseek/deepseek-v4.1-flash"

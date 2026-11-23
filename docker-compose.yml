@@ -8,8 +8,11 @@ services:
       - ./openwebui:/app/backend/data
     environment:
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
-      OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
-      OPENAI_API_KEY: ${OPENROUTER_API_KEY}
+      # Two OpenAI-compatible connections: OpenRouter for regular chat models, and
+      # Copper, DINC's Hermes agent (served from its profile at /p/copper/v1).
+      # Entries are ; separated and the keys line up with the urls by position.
+      OPENAI_API_BASE_URLS: "https://openrouter.ai/api/v1;http://hermes:8642/p/copper/v1"
+      OPENAI_API_KEYS: "${OPENROUTER_API_KEY};${HERMES_API_KEY}"
       ENABLE_WEB_SEARCH: "true"
       WEB_SEARCH_ENGINE: "searxng"
       SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
@@ -19,12 +22,12 @@ services:
       IMAGES_OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
       IMAGES_OPENAI_API_KEY: ${OPENROUTER_API_KEY}
       ENABLE_PERSISTENT_CONFIG: ${WEBUI_PERSIST_CONFIG}
-      TOOL_SERVER_CONNECTIONS: ${WEBUI_TOOL_CONNECTIONS}
       TERMINAL_SERVER_CONNECTIONS: ${WEBUI_TERMINAL_CONNECTIONS}
     network_mode: service:tailscale
     depends_on:
       - tailscale
       - open-terminal
+      - hermes
 
   # Tailscale is used for networking (highly recommend learning it--it's an awesome tool)
   tailscale:
@@ -83,25 +86,26 @@ services:
     networks:
       - ai-stack
 
-  # MCPO exposes all the custom tools for the model. If you want to add more tools,
-  # all you need to do is add the command to the mcpo config file. One caveat is 
-  # that the mcp server does need to be able to be run with either uvx or npx
-  # because that is that what is available within the mcpo image. 
-  mcpo:
-    image: ghcr.io/open-webui/mcpo:main
-    working_dir: /workspace
-    volumes:
-      - ./mcpo/config:/config
-      - ./mcpo/workspace:/workspace
-    command:
-      - --config
-      - /config/mcp_servers.json
-      - --port
-      - "8000"
-      - --api-key
-      - ${MCPO_API_KEY}
-      - --hot-reload
+  # Hermes Agent (from Nous Research) runs your agents and serves them to Open WebUI
+  # over an OpenAI-compatible API on the internal network (not on your tailnet).
+  # Each agent is a profile in hermes/profiles/<name>/, reached at /p/<name>/v1.
+  # DINC ships one, Copper. Only networking and auth are set here, because
+  # anything in this environment block applies to every agent and overrides
+  # their own .env files.
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    command: ["gateway", "run"]
     restart: unless-stopped
+    volumes:
+      - ./hermes:/opt/data
+    environment:
+      HERMES_UID: ${HERMES_UID:-10000}
+      HERMES_GID: ${HERMES_GID:-10000}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      API_SERVER_PORT: "8642"
+      API_SERVER_KEY: ${HERMES_API_KEY}
     networks:
       - ai-stack
 
