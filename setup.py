@@ -3,7 +3,8 @@ To get start playing with your dinc, simply run this python script and it will
 guide you through the process. 
 
 It starts by making the directory structure required for docker compose. Then,
-it will prompt you for your tailscale auth key. If you don't know how to create
+it will prompt you for your tailscale auth key, OpenRouter key, and a login for the
+Hermes dashboard. If you don't know how to create
 a tailscale auth key, then you refer to the readme for a quick guide. 
 
 The script will also take care of generating all of your secrets and storing them
@@ -70,6 +71,28 @@ def install_copper(hermes_api_key, openrouter_api_key):
         print(f"Installed Copper's {name} to hermes/profiles/copper/{name}.")
 
 
+def prompt_dashboard_login():
+    # The Hermes dashboard is exposed on your tailnet, and Hermes refuses to serve
+    # it on anything but localhost without a login. Returns (username, password).
+    username = input("Hermes dashboard username (blank for default of admin): ").strip() or "admin"
+    while True:
+        password = getpass("Hermes dashboard password (blank to generate one): ").strip()
+        if not password:
+            password = token_hex(16)
+            print(f"Generated Hermes dashboard password: {password}")
+            print("Save it somewhere safe. It is also stored in your .env as HERMES_DASHBOARD_PASSWORD.")
+            break
+        if "'" in password:
+            # Values are single quoted in .env so compose does not expand any $ in them.
+            print("The password can't contain a single quote ('). Try again.")
+            continue
+        if getpass("Confirm password: ").strip() != password:
+            print("Passwords don't match. Try again.")
+            continue
+        break
+    return username, password
+
+
 def terminal_connections_json(open_terminal_api_key):
     return json.dumps([
       {
@@ -131,6 +154,17 @@ def migrate_env_file(path):
         entries["HERMES_UID"], entries["HERMES_GID"] = host_ids()
         changes.append("added HERMES_UID and HERMES_GID")
 
+    if not entries.get("HERMES_DASHBOARD_USERNAME") or not entries.get("HERMES_DASHBOARD_PASSWORD"):
+        print("The Hermes dashboard is now available on your tailnet and needs a login.")
+        username, password = prompt_dashboard_login()
+        entries["HERMES_DASHBOARD_USERNAME"] = quote(username)
+        entries["HERMES_DASHBOARD_PASSWORD"] = quote(password)
+        changes.append("added HERMES_DASHBOARD_USERNAME and HERMES_DASHBOARD_PASSWORD")
+
+    if not entries.get("HERMES_DASHBOARD_SECRET"):
+        entries["HERMES_DASHBOARD_SECRET"] = token_hex(32)
+        changes.append("added HERMES_DASHBOARD_SECRET")
+
     # The MCP Manager (mcpo) was removed from dinc. Drop the settings it used.
     removed = set()
     for key in ("MCPO_API_KEY", "WEBUI_TOOL_CONNECTIONS"):
@@ -191,6 +225,7 @@ project_name = input("Project name (for docker compose): ") # Project name are i
 if not project_name:
     print("You must provide a project name!")
     sys.exit(1)
+dashboard_username, dashboard_password = prompt_dashboard_login()
 
 webui_secret_key = token_hex(32)
 searxng_secret_key = token_hex(32)
@@ -214,6 +249,9 @@ env_contents = (
     f"HERMES_API_KEY={hermes_api_key}\n"
     f"HERMES_UID={hermes_uid}\n"
     f"HERMES_GID={hermes_gid}\n"
+    f"HERMES_DASHBOARD_USERNAME={quote(dashboard_username)}\n"
+    f"HERMES_DASHBOARD_PASSWORD={quote(dashboard_password)}\n"
+    f"HERMES_DASHBOARD_SECRET={token_hex(32)}\n"
     f"WEBUI_TERMINAL_CONNECTIONS='{terminal_connections_json(open_terminal_api_key)}'\n"
     "WEBUI_PERSIST_CONFIG=True\n"
 )

@@ -28,7 +28,7 @@ git clone https://github.com/JoshEager/DINC.git && cd DINC
 ```bash
 python setup.py
 ```
-The script will ask for your tailscale auth key as well as your open router auth key. Please note that it will not show up when you type (or paste) for security reasons. 
+The script will ask for your tailscale auth key, your open router auth key, and a username and password for the Hermes dashboard. Please note that it will not show up when you type (or paste) for security reasons. 
 After running the setup script, all you need to do is run the following command, and your stack should be available at `https://dinc.<your tailnet>.ts.net`
 ```bash
 docker compose up -d
@@ -45,6 +45,8 @@ By default, DINC configures and runs [Open Terminal](https://github.com/open-web
 DINC ships with Copper, an agent built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) from Nous Research. Pick **Copper** in Open WebUI's model selector and you are talking to a full agent rather than a bare LLM: it has its own tools, remembers things about you and your projects, and builds up skills over time. Copper is named after Michigan's Copper Country, and after the wire everything else runs on.
 
 Copper runs on DeepSeek V4.1 Flash through your OpenRouter key, which is cheap and handles tool use well. Its API is only reachable from inside the stack, not on your tailnet.
+
+You can manage Copper and your other agents from the Hermes dashboard at `https://dinc.<your tailnet>.ts.net:9119`, and you can point the Hermes desktop app at that same URL as a remote connection. Log in with the username and password you gave the setup script (they're saved in your `.env` as `HERMES_DASHBOARD_USERNAME` and `HERMES_DASHBOARD_PASSWORD`). To change them, edit `.env` and run `docker compose up -d hermes`.
 
 Copper is set up exactly the way you would set up an agent of your own, so it doubles as an example. Hermes calls each agent a profile, and Copper's lives in `hermes/profiles/copper/`. You can make Copper your own by editing these files and running `docker compose restart hermes`:
 

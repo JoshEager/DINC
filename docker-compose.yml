@@ -77,7 +77,8 @@ services:
       - ai-stack
 
   # Hermes Agent (from Nous Research) runs your agents and serves them to Open WebUI
-  # over an OpenAI-compatible API on the internal network (not on your tailnet).
+  # over an OpenAI-compatible API on the internal network (the API is not on your
+  # tailnet, but the dashboard is).
   # Each agent is a profile in hermes/profiles/<name>/, reached at /p/<name>/v1.
   # DINC ships one, Copper. Only networking and auth are set here, because
   # anything in this environment block applies to every agent and overrides
@@ -96,11 +97,17 @@ services:
       API_SERVER_HOST: "0.0.0.0"
       API_SERVER_PORT: "8642"
       API_SERVER_KEY: ${HERMES_API_KEY}
+      # The dashboard (a web UI for managing your agents, and what the Hermes
+      # desktop app connects to) runs in this same container. Tailscale serves it
+      # on your tailnet at https://dinc.<your tailnet>.ts.net:9119 (see serve.json).
+      # Hermes requires a login whenever the dashboard listens beyond localhost,
+      # which is what the HERMES_DASHBOARD_* values from setup.py are for.
       HERMES_DASHBOARD: 1
       HERMES_DASHBOARD_HOST: "0.0.0.0"
       HERMES_DASHBOARD_PORT: 9119
-      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: "jeager"
-      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: "Password"
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_USERNAME}
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_PASSWORD}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_SECRET}
     networks:
       - ai-stack
 
