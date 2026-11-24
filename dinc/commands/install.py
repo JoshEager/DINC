@@ -3,7 +3,7 @@
 from secrets import token_hex
 import time
 
-from .. import compose, migrations, paths, state, ui
+from .. import compose, migrations, paths, state, timezone, ui
 
 DEFAULT_IMAGE_MODEL = "meta/muse-image"
 
@@ -43,6 +43,7 @@ def run(args):
     # The compose project name keeps containers apart if you run more than one
     # DINC on the same machine.
     project_name = ui.ask("Project name for docker compose", default="dinc")
+    tz = timezone.detect()
 
     env = "\n".join([
         HEADER,
@@ -50,12 +51,15 @@ def run(args):
         f"TS_AUTHKEY={tailscale_key}",
         f"OPENROUTER_API_KEY={openrouter_key}",
         f"IMAGE_GEN_MODEL={image_model}",
+        f"TZ={tz}",
         f"WEBUI_SECRET_KEY={token_hex(32)}",
         f"OPEN_TERMINAL_API_KEY={token_hex(32)}",
     ]) + "\n"
     with paths.ENV_FILE.open("x", encoding="utf-8") as f:
         f.write(env)
     ui.ok("Wrote .env with your keys and freshly generated secrets.")
+    ui.info(f"Set the stack's timezone to {tz}, the same as this machine. To use a")
+    ui.info("different one, change TZ in .env and run `docker compose up -d`.")
 
     write_searxng_settings()
     paths.ensure_data_dirs()

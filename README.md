@@ -30,6 +30,8 @@ python DINC.py
 ```
 This opens DINC's menu. Pick **Install**, and it will ask for your tailscale auth key and your open router key (they won't show up as you type or paste, for security reasons), generate every other secret for you, and offer to start the stack. Give it a minute, and your stack will be available at `https://dinc.<your tailnet>.ts.net`.
 
+Every container runs in the same timezone as the machine you installed on. To use a different one, change `TZ` in `.env` to a name from [this list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (like `America/Detroit`) and run `docker compose up -d`.
+
 # Features
 ## Open Web UI With Sensible defaults
 DINC configures and runs an instance of [Open WebUI](https://github.com/open-webui/open-webui). Open WebUI is essentially a clone of Chat-GPT's frontend, but with way more features and way cooler. It also keeps your chats privately stored on your computer. The features of Open WebUI are almost limitless. 

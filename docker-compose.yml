@@ -11,6 +11,9 @@ services:
     # changes in the admin panel live. So editing this block does nothing to an
     # existing install: DINC.py changes those settings with migrations instead.
     environment:
+      # Every service runs in the timezone from .env, which DINC.py sets to
+      # your machine's. TZ is read on every start, unlike the settings below.
+      TZ: ${TZ:-UTC}
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
       OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
       OPENAI_API_KEY: ${OPENROUTER_API_KEY}
@@ -33,6 +36,7 @@ services:
     image: tailscale/tailscale:latest
     hostname: dinc
     environment:
+      TZ: ${TZ:-UTC}
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_STATE_DIR: "/var/lib/tailscale"
       TS_SERVE_CONFIG: "/config/serve.json"
@@ -53,6 +57,7 @@ services:
     image: docker.io/searxng/searxng:latest
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-UTC}
       SEARXNG_HOST: "[::]"
       SEARXNG_PORT: 8080
     volumes:
@@ -73,6 +78,7 @@ services:
     volumes:
       - ./open-terminal:/home/user
     environment:
+      TZ: ${TZ:-UTC}
       OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY}
     networks:
       - ai-stack
