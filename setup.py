@@ -47,7 +47,7 @@ def host_ids():
     return "10000", "10000"
 
 
-def install_copper(hermes_api_key):
+def install_copper(hermes_api_key, openrouter_api_key):
     # Copper is DINC's Hermes agent. It is installed as a regular Hermes profile
     # in hermes/profiles/copper/, exactly like an agent you would add yourself,
     # so it doubles as a working example. Its files are tracked in copper/ and
@@ -61,9 +61,11 @@ def install_copper(hermes_api_key):
             continue
         contents = (project_dir / "copper" / name).read_text(encoding="utf-8")
         if name == ".env":
-            # Each profile's API requests are authenticated with that profile's
-            # own key, so Copper gets the same HERMES_API_KEY Open WebUI uses.
+            # A profile only sees the keys in its own .env, not the ones the
+            # compose file gives the container. Copper needs the HERMES_API_KEY
+            # Open WebUI uses to reach it, and your OpenRouter key to think.
             contents += f"API_SERVER_KEY={hermes_api_key}\n"
+            contents += f"OPENROUTER_API_KEY={openrouter_api_key}\n"
         dest.write_text(contents, encoding="utf-8")
         print(f"Installed Copper's {name} to hermes/profiles/copper/{name}.")
 
@@ -169,7 +171,8 @@ def migrate_env_file(path):
 # it in place instead of walking through the first time setup prompts again.
 if env_file.exists():
     migrate_env_file(env_file)
-    install_copper(unquote(parse_env_file(env_file)["HERMES_API_KEY"]))
+    entries = parse_env_file(env_file)
+    install_copper(unquote(entries["HERMES_API_KEY"]), unquote(entries["OPENROUTER_API_KEY"]))
     sys.exit(0)
 
 
@@ -217,7 +220,7 @@ env_contents = (
 with env_file.open('x', encoding="utf-8") as f:
     f.write(env_contents)
 
-install_copper(hermes_api_key)
+install_copper(hermes_api_key, openrouter_api_key)
 
 
 # The searxng secret key does not support being loaded via environment variables.

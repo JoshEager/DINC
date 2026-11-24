@@ -50,31 +50,21 @@ Copper is set up exactly the way you would set up an agent of your own, so it do
 
 - `config.yaml`: the model. Use any OpenRouter model slug under `model:` > `default:`.
 - `SOUL.md`: Copper's personality and instructions.
-- `.env`: the name shown in Open WebUI (`API_SERVER_MODEL_NAME`) and the key Open WebUI uses to reach it (`API_SERVER_KEY`).
+- `.env`: the name shown in Open WebUI (`API_SERVER_MODEL_NAME`), the key Open WebUI uses to reach it (`API_SERVER_KEY`), and your OpenRouter key (`OPENROUTER_API_KEY`).
 
 The originals live in the `copper/` folder. Setup copies them into `hermes/profiles/copper/` once and never overwrites your edits, so to start over, delete a file there and run `python setup.py` again.
 
 ### Adding Your Own Agents
-Each agent is a folder under `hermes/profiles/<name>/` with its own config, personality, memory, and skills. One Hermes container serves all of them, so you don't need to touch the compose file. The easiest way to make one is to start from Copper's files. For an agent called `coder`:
+Each agent is a folder under `hermes/profiles/<name>/` with its own config, personality, memory, and skills. One Hermes container serves all of them, so you don't need to touch the compose file. The easiest way to make one is to start from Copper's files:
 
 1. Copy Copper's original files into a new profile folder:
    ```bash
-   mkdir -p hermes/profiles/coder && cp copper/config.yaml copper/SOUL.md copper/.env hermes/profiles/coder/
+   mkdir -p hermes/profiles/your-agent && cp copper/config.yaml copper/SOUL.md copper/.env hermes/profiles/your-agent/
    ```
 2. Edit them: rewrite `SOUL.md` so it doesn't think it's Copper, pick a model in `config.yaml`, and change `API_SERVER_MODEL_NAME` in `.env`.
-3. Add your `HERMES_API_KEY` (from DINC's `.env`) to the bottom of `hermes/profiles/coder/.env` as `API_SERVER_KEY=<your key>`.
+3. Give the agent its keys. A profile only sees the keys in its own `.env`, so it needs `API_SERVER_KEY` (your `HERMES_API_KEY`, so Open WebUI can reach it) and `OPENROUTER_API_KEY` (so it can reach its model).
 4. Restart Hermes with `docker compose restart hermes`.
-5. In Open WebUI, go to Admin Settings > Connections and add an OpenAI connection with URL `http://hermes:8642/p/coder/v1` and your `HERMES_API_KEY` as the key.
-
-Every agent you add is reached at `http://hermes:8642/p/<name>/v1` and shows up as a separate model in the picker. Copy Copper's original files from `copper/` rather than the `hermes/profiles/copper/` folder, since the latter also holds Copper's memories and chat history.
-
-If all you want is different models for different kinds of work, you may not need multiple agents. Hermes can hand subtasks off to child agents with its `delegate_task` tool, and those children can run on a cheaper model. Set it in the agent's `config.yaml`:
-```yaml
-delegation:
-  provider: "openrouter"
-  model: "<provider/model>"
-```
-Separate profiles make more sense when you want agents with different personalities or memories, like one for coding and one for school.
+5. In Open WebUI, go to Admin Settings > Connections and add an OpenAI connection with URL `http://hermes:8642/p/your-profile/v1` and your `HERMES_API_KEY` as the key.
 
 # Upgrading an Existing Install
 Pull the latest changes and run the setup script again. When it finds an existing `.env`, it migrates it in place instead of starting over.

@@ -4,6 +4,11 @@
 # For every available setting, see Hermes's cli-config.yaml.example:
 # https://github.com/NousResearch/hermes-agent/blob/main/cli-config.yaml.example
 
+# The config format version this file was written against. Hermes needs it to
+# migrate the file when it updates; without it, Hermes treats the file as
+# ancient and refuses to migrate it. Hermes manages it from here on.
+_config_version: 54
+
 model:
   provider: "openrouter"
   default: "deepseek/deepseek-v4.1-flash"
