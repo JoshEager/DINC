@@ -54,6 +54,8 @@ Copper is set up exactly the way you would set up an agent of your own, so it do
 
 The originals live in the `copper/` folder. Setup copies them into `hermes/profiles/copper/` once and never overwrites your edits, so to start over, delete a file there and run `python setup.py` again.
 
+> **Important:** Copper only works with all of Open WebUI's tools turned off for it. Before chatting with Copper for the first time, go to Workspace > Models in Open WebUI, edit Copper, and disable every tool, including the terminal. If any are on, every message fails with a "No user message found" error. This is a [known Hermes bug](https://github.com/NousResearch/hermes-agent/issues/154758) with how it reads Open WebUI's requests when tools are attached. You don't lose anything by turning them off, because Copper has its own terminal, memory, and tools inside Hermes.
+
 ### Adding Your Own Agents
 Each agent is a folder under `hermes/profiles/<name>/` with its own config, personality, memory, and skills. One Hermes container serves all of them, so you don't need to touch the compose file. The easiest way to make one is to start from Copper's files:
 
@@ -65,6 +67,7 @@ Each agent is a folder under `hermes/profiles/<name>/` with its own config, pers
 3. Give the agent its keys. A profile only sees the keys in its own `.env`, so it needs `API_SERVER_KEY` (your `HERMES_API_KEY`, so Open WebUI can reach it) and `OPENROUTER_API_KEY` (so it can reach its model).
 4. Restart Hermes with `docker compose restart hermes`.
 5. In Open WebUI, go to Admin Settings > Connections and add an OpenAI connection with URL `http://hermes:8642/p/your-profile/v1` and your `HERMES_API_KEY` as the key.
+6. In Workspace > Models, edit the new agent and disable all of Open WebUI's tools for it, just like for Copper.
 
 # Upgrading an Existing Install
 Pull the latest changes and run the setup script again. When it finds an existing `.env`, it migrates it in place instead of starting over.
