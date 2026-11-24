@@ -6,13 +6,14 @@ services:
     restart: unless-stopped
     volumes:
       - ./openwebui:/app/backend/data
+    # Open WebUI only reads most of these the very first time it starts. After
+    # that it keeps its settings in its database (openwebui/webui.db), where your
+    # changes in the admin panel live. So editing this block does nothing to an
+    # existing install: DINC.py changes those settings with migrations instead.
     environment:
       WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
-      # Two OpenAI-compatible connections: OpenRouter for regular chat models, and
-      # Copper, DINC's Hermes agent (served from its profile at /p/copper/v1).
-      # Entries are ; separated and the keys line up with the urls by position.
-      OPENAI_API_BASE_URLS: "https://openrouter.ai/api/v1;http://hermes:8642/p/copper/v1"
-      OPENAI_API_KEYS: "${OPENROUTER_API_KEY};${HERMES_API_KEY}"
+      OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
+      OPENAI_API_KEY: ${OPENROUTER_API_KEY}
       ENABLE_WEB_SEARCH: "true"
       WEB_SEARCH_ENGINE: "searxng"
       SEARXNG_QUERY_URL: "http://searxng:8080/search?q=<query>"
@@ -21,13 +22,11 @@ services:
       IMAGE_GENERATION_MODEL: ${IMAGE_GEN_MODEL}
       IMAGES_OPENAI_API_BASE_URL: "https://openrouter.ai/api/v1"
       IMAGES_OPENAI_API_KEY: ${OPENROUTER_API_KEY}
-      ENABLE_PERSISTENT_CONFIG: ${WEBUI_PERSIST_CONFIG}
-      TERMINAL_SERVER_CONNECTIONS: ${WEBUI_TERMINAL_CONNECTIONS}
+      TERMINAL_SERVER_CONNECTIONS: '[{"id": "open-terminal", "name": "Open Terminal", "url": "http://open-terminal:8000", "key": "${OPEN_TERMINAL_API_KEY}", "auth_type": "bearer", "config": {"access_grants": []}}]'
     network_mode: service:tailscale
     depends_on:
       - tailscale
       - open-terminal
-      - hermes
 
   # Tailscale is used for networking (highly recommend learning it--it's an awesome tool)
   tailscale:
@@ -66,6 +65,8 @@ services:
   # create and edit files, run code, and browse the web from inside the container.
   # Open WebUI connects to it through the dedicated terminal integration, which also
   # adds a file browser and an interactive terminal pane to the UI.
+  # It is also where agents like Claude Code, Codex, OpenCode or Hermes live: install
+  # one in here and Open WebUI offers it in the model picker (see the README).
   open-terminal:
     image: ghcr.io/open-webui/open-terminal:latest
     restart: unless-stopped
@@ -73,41 +74,6 @@ services:
       - ./open-terminal:/home/user
     environment:
       OPEN_TERMINAL_API_KEY: ${OPEN_TERMINAL_API_KEY}
-    networks:
-      - ai-stack
-
-  # Hermes Agent (from Nous Research) runs your agents and serves them to Open WebUI
-  # over an OpenAI-compatible API on the internal network (the API is not on your
-  # tailnet, but the dashboard is).
-  # Each agent is a profile in hermes/profiles/<name>/, reached at /p/<name>/v1.
-  # DINC ships one, Copper. Only networking and auth are set here, because
-  # anything in this environment block applies to every agent and overrides
-  # their own .env files.
-  hermes:
-    image: nousresearch/hermes-agent:latest
-    command: ["gateway", "run"]
-    restart: unless-stopped
-    volumes:
-      - ./hermes:/opt/data
-    environment:
-      HERMES_UID: ${HERMES_UID:-10000}
-      HERMES_GID: ${HERMES_GID:-10000}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
-      API_SERVER_ENABLED: "true"
-      API_SERVER_HOST: "0.0.0.0"
-      API_SERVER_PORT: "8642"
-      API_SERVER_KEY: ${HERMES_API_KEY}
-      # The dashboard (a web UI for managing your agents, and what the Hermes
-      # desktop app connects to) runs in this same container. Tailscale serves it
-      # on your tailnet at https://dinc.<your tailnet>.ts.net:9119 (see serve.json).
-      # Hermes requires a login whenever the dashboard listens beyond localhost,
-      # which is what the HERMES_DASHBOARD_* values from setup.py are for.
-      HERMES_DASHBOARD: 1
-      HERMES_DASHBOARD_HOST: "0.0.0.0"
-      HERMES_DASHBOARD_PORT: 9119
-      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${HERMES_DASHBOARD_USERNAME}
-      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${HERMES_DASHBOARD_PASSWORD}
-      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${HERMES_DASHBOARD_SECRET}
     networks:
       - ai-stack
 

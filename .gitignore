@@ -4,5 +4,6 @@ tailscale/state
 .env
 searxng/config/settings.yml
 open-terminal/
-hermes/
-!copper/.env
+dinc/state.db
+__pycache__/
+

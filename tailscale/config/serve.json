@@ -2,9 +2,6 @@
   "TCP": {
     "443": {
       "HTTPS": true
-    },
-    "9119": {
-      "HTTPS": true
     }
   },
   "Web": {
@@ -14,17 +11,9 @@
           "Proxy": "http://localhost:8080"
         }
       }
-    },
-    "${TS_CERT_DOMAIN}:9119": {
-      "Handlers": {
-        "/": {
-          "Proxy": "http://hermes:9119"
-        }
-      }
     }
   },
   "AllowFunnel": {
-    "${TS_CERT_DOMAIN}:443": false,
-    "${TS_CERT_DOMAIN}:9119": false
+    "${TS_CERT_DOMAIN}:443": false
   }
 }

@@ -21,18 +21,14 @@ It doesn't cost anything to make a key on open router, and there is a 100% free 
 If you don't already have docker installed on whatever machine you are planning on running this stack from, make sure you do that. A convenient guide can be found [here](https://docs.docker.com/engine/install/). You will also need docker compose. For installing docker compose, you can follow the guide [here](https://docs.docker.com/compose/install/) for your platform.
 
 ## Project Setup
-All you need to do to setup this project is clone this repository and run setup.py
+Clone this repository and run DINC.py. You'll need Python 3.9 or newer, and nothing else to install.
 ```bash
 git clone https://github.com/JoshEager/DINC.git && cd DINC
 ```
 ```bash
-python setup.py
+python DINC.py
 ```
-The script will ask for your tailscale auth key, your open router auth key, and a username and password for the Hermes dashboard. Please note that it will not show up when you type (or paste) for security reasons. 
-After running the setup script, all you need to do is run the following command, and your stack should be available at `https://dinc.<your tailnet>.ts.net`
-```bash
-docker compose up -d
-``` 
+This opens DINC's menu. Pick **Install**, and it will ask for your tailscale auth key and your open router key (they won't show up as you type or paste, for security reasons), generate every other secret for you, and offer to start the stack. Give it a minute, and your stack will be available at `https://dinc.<your tailnet>.ts.net`.
 
 # Features
 ## Open Web UI With Sensible defaults
@@ -41,44 +37,79 @@ DINC configures and runs an instance of [Open WebUI](https://github.com/open-web
 ## Give Your LLMS Their Own Sandboxed Linux Machine
 By default, DINC configures and runs [Open Terminal](https://github.com/open-webui/open-terminal) and connects it to Open Web UI through the dedicated terminal integration. Your LLM gets a full Linux environment where it can install its own packages, create files, run code, and even make github PRs if you ask it to. Open Terminal also adds a file browser and an interactive terminal pane to the UI.
 
-## Meet Copper, Your Own AI Agent
-DINC ships with Copper, an agent built on [Hermes Agent](https://github.com/NousResearch/hermes-agent) from Nous Research. Pick **Copper** in Open WebUI's model selector and you are talking to a full agent rather than a bare LLM: it has its own tools, remembers things about you and your projects, and builds up skills over time. Copper is named after Michigan's Copper Country, and after the wire everything else runs on.
+## Run Claude Code, Codex, OpenCode, Hermes and More From Your Chat
+Open Terminal isn't just a sandbox for your regular models. It can also run full coding agents, and Open WebUI lets you chat with them like any other model. This works through the [Agent Client Protocol](https://agentclientprotocol.com) (ACP), an open standard for how an app talks to an agent. Open Terminal starts the agent's command line tool inside the terminal, Open WebUI speaks ACP to it, and the agent shows up in the model picker as `<agent>/<model>` (for example `opencode/...` or `hermes/...`). You get the agent's own tools, memory and skills, its steps shown as cards in the chat, and its tool approvals as buttons you click. Its workspace is the Open Terminal home folder, so you can watch what it does in the file browser.
 
-Copper runs on DeepSeek V4.1 Flash through your OpenRouter key, which is cheap and handles tool use well. Its API is only reachable from inside the stack, not on your tailnet.
+Because the agent lives on the Open Terminal machine, DINC doesn't need to run or configure it for you. Install whichever agents you like, and they all work the same way. Open Terminal supports these out of the box ([full list and details](https://docs.openwebui.com/features/open-terminal/agents)):
 
-You can manage Copper and your other agents from the Hermes dashboard at `https://dinc.<your tailnet>.ts.net:9119`, and you can point the Hermes desktop app at that same URL as a remote connection. Log in with the username and password you gave the setup script (they're saved in your `.env` as `HERMES_DASHBOARD_USERNAME` and `HERMES_DASHBOARD_PASSWORD`). To change them, edit `.env` and run `docker compose up -d hermes`.
+| Agent | Command it needs on the PATH |
+| --- | --- |
+| Claude Code | `claude` |
+| Codex | `codex` |
+| OpenCode | `opencode` |
+| Hermes Agent | `hermes` |
+| Gemini CLI | `gemini` |
+| GitHub Copilot | `copilot` |
+| Cursor | `agent` |
+| Goose | `goose` |
+| Qwen Code | `qwen` |
+| Cline | `cline` |
+| Grok | `grok` |
+| Antigravity | `agy` |
+| Pi | `pi` |
 
-Copper is set up exactly the way you would set up an agent of your own, so it doubles as an example. Hermes calls each agent a profile, and Copper's lives in `hermes/profiles/copper/`. You can make Copper your own by editing these files and running `docker compose restart hermes`:
+### Adding an agent
+1. In Open WebUI, open the terminal pane and install the agent using its own install instructions.
+2. Log the agent in from that same terminal (for example run `claude` or `codex login --device-auth` and follow the prompts, or give it an API key). If you want it to use your OpenRouter key, most agents accept one in their own config.
+3. Start a new chat, select the Open Terminal, and pick the agent from the model picker. If it doesn't show up, run `docker compose restart open-terminal` so Open Terminal finds the new command.
 
-- `config.yaml`: the model. Use any OpenRouter model slug under `model:` > `default:`.
-- `SOUL.md`: Copper's personality and instructions.
-- `.env`: the name shown in Open WebUI (`API_SERVER_MODEL_NAME`), the key Open WebUI uses to reach it (`API_SERVER_KEY`), and your OpenRouter key (`OPENROUTER_API_KEY`).
+A few things to know:
+- **Only your home folder survives.** DINC keeps `/home/user` (the `open-terminal/` folder on your host) across restarts and updates. Anything installed elsewhere, like `apt install` or a system-wide `npm install -g`, is wiped when the container is recreated. Most agent installers put themselves in your home folder already. For npm, run `npm config set prefix ~/.local` first so `npm install -g` lands in `~/.local/bin`.
+- **Open Terminal has to be able to find the command.** If the agent is installed somewhere that isn't on Open Terminal's PATH, point it there by adding `OPEN_TERMINAL_<AGENT>_COMMAND` to the `open-terminal` service's environment in `docker-compose.yml`, for example `OPEN_TERMINAL_OPENCODE_COMMAND: "/home/user/.opencode/bin/opencode acp"`.
+- **Want Claude Code and Codex preinstalled?** Change the `open-terminal` image to `ghcr.io/open-webui/open-terminal:agents`, which is the same image with those two CLIs included.
+- **Agent chats need to be saved chats** (not temporary ones), and each chat can only use one agent.
 
-The originals live in the `copper/` folder. Setup copies them into `hermes/profiles/copper/` once and never overwrites your edits, so to start over, delete a file there and run `python setup.py` again.
-
-> **Important:** Copper only works with all of Open WebUI's tools turned off for it. Before chatting with Copper for the first time, go to Workspace > Models in Open WebUI, edit Copper, and disable every tool, including the terminal. If any are on, every message fails with a "No user message found" error. This is a [known Hermes bug](https://github.com/NousResearch/hermes-agent/issues/154758) with how it reads Open WebUI's requests when tools are attached. You don't lose anything by turning them off, because Copper has its own terminal, memory, and tools inside Hermes.
-
-### Adding Your Own Agents
-Each agent is a folder under `hermes/profiles/<name>/` with its own config, personality, memory, and skills. One Hermes container serves all of them, so you don't need to touch the compose file. The easiest way to make one is to start from Copper's files:
-
-1. Copy Copper's original files into a new profile folder:
-   ```bash
-   mkdir -p hermes/profiles/your-agent && cp copper/config.yaml copper/SOUL.md copper/.env hermes/profiles/your-agent/
-   ```
-2. Edit them: rewrite `SOUL.md` so it doesn't think it's Copper, pick a model in `config.yaml`, and change `API_SERVER_MODEL_NAME` in `.env`.
-3. Give the agent its keys. A profile only sees the keys in its own `.env`, so it needs `API_SERVER_KEY` (your `HERMES_API_KEY`, so Open WebUI can reach it) and `OPENROUTER_API_KEY` (so it can reach its model).
-4. Restart Hermes with `docker compose restart hermes`.
-5. In Open WebUI, go to Admin Settings > Connections and add an OpenAI connection with URL `http://hermes:8642/p/your-profile/v1` and your `HERMES_API_KEY` as the key.
-6. In Workspace > Models, edit the new agent and disable all of Open WebUI's tools for it, just like for Copper.
-
-# Upgrading an Existing Install
-Pull the latest changes and run the setup script again. When it finds an existing `.env`, it migrates it in place instead of starting over.
-```bash
-git pull && python setup.py && docker compose up -d --remove-orphans
+### Any other ACP agent
+Any agent that speaks ACP over stdio works, even if it's not in the list above (OpenClaw, Kiro, Droid and so on). Tell Open Terminal how to start it by adding `OPEN_TERMINAL_ACP_AGENTS` to the `open-terminal` service's environment, then run `docker compose up -d open-terminal`:
+```yaml
+      OPEN_TERMINAL_ACP_AGENTS: '{"kiro":{"name":"Kiro","command":"kiro-cli acp"}}'
 ```
-Open WebUI only reads its connection settings from the environment on first launch, so on an existing install you need to add Copper yourself under Admin Settings > Connections > OpenAI: URL `http://hermes:8642/p/copper/v1`, and the `HERMES_API_KEY` value from your `.env` as the key.
+Check the agent's docs for the command that starts it in ACP mode. It shows up in the model picker as `acp-<id>/<model>`.
 
-If you used an older version with the MCP Manager tool, you can delete it from Open WebUI under Admin Settings > External Tools, along with the leftover `mcpo/` folder.
+### Hermes and other always-on agents
+Some agents, like Hermes, can also run as a long-lived assistant that you message from Telegram, Discord, Slack and other chat apps. You can set that up on the Open Terminal machine too, following the agent's own docs, and it will keep the same memory whether you talk to it there or in Open WebUI.
+
+# Managing Your Install
+Run `python DINC.py` any time for the menu. It shows whether the stack is running and whether an update is waiting, and lets you:
+
+- **Update:** pulls the latest DINC, runs any migrations, pulls new images, and restarts the stack.
+- **Status:** shows every service and which migrations have run.
+- **Start, Stop, Restart, Logs:** the everyday docker compose commands, without having to remember them.
+- **Change OpenRouter key:** swaps your key in `.env` *and* in Open WebUI.
+
+Every menu item also works as a command, which is handy for scripts and cron. For example:
+```bash
+python DINC.py update
+```
+Run `python DINC.py --help` for the full list.
+
+## How updates work
+Open WebUI only reads most of its settings from `docker-compose.yml` the very first time it starts. After that it keeps them in its own database, which is how your changes in the admin panel stick (a connection you added, a feature you turned off). It also means a new default in `docker-compose.yml` never reaches an install that already exists.
+
+So when a new version of DINC needs to change something on an existing install, it ships a *migration*. A migration can edit `.env` and other files before the stack starts, and change individual Open WebUI settings once it's running. It only touches the settings it's about, so everything you've changed yourself stays as it is. Each migration runs once per install, and DINC.py remembers which ones have run in `dinc/state.db`, so if you undo something a migration did, it stays undone. Before changing Open WebUI's settings, DINC.py backs up its database to `openwebui/dinc-backups/`.
+
+## Working on DINC.py
+`DINC.py` only starts the code in the `dinc/` folder:
+
+| Path | What it does |
+| --- | --- |
+| `dinc/app.py` | The menu and the command line |
+| `dinc/commands/` | One file per area: install, update, status, services, settings. Register new commands in `commands/__init__.py`, which adds them to the menu and command line at once |
+| `dinc/migrations/` | One file per migration (`m0003_short_name.py`). How to write one is explained at the top of `migrations/__init__.py` |
+| `dinc/openwebui.py` | Reads and changes Open WebUI settings inside the running container |
+| `dinc/compose.py`, `envfile.py`, `state.py` | docker compose, the `.env` file, and `dinc/state.db` |
+
+The one rule to remember: when you change a default, change it in two places. Put it in `docker-compose.yml` (or the install command) for new installs, and in a migration for existing ones. New installs mark every migration as done, because they already start out current.
 
 # License
 The MIT License (MIT)
