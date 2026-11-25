@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
-from . import install, services, settings, status, update
+from . import agents, install, services, settings, status, update
 
 
 @dataclass
@@ -26,4 +26,6 @@ COMMANDS = [
     Command("logs", "Logs", "follow a service's logs", services.logs, "Stack"),
     Command("openrouter-key", "Change OpenRouter key", "use a new OpenRouter key everywhere",
             settings.openrouter_key, "Settings"),
+    Command("agents", "ACP agents", "register extra ACP agents with Open Terminal",
+            agents.run, "Settings"),
 ]

@@ -72,11 +72,14 @@ A few things to know:
 - **Agent chats need to be saved chats** (not temporary ones), and each chat can only use one agent.
 
 ### Any other ACP agent
-Any agent that speaks ACP over stdio works, even if it's not in the list above (OpenClaw, Kiro, Droid and so on). Tell Open Terminal how to start it by adding `OPEN_TERMINAL_ACP_AGENTS` to the `open-terminal` service's environment, then run `docker compose up -d open-terminal`:
-```yaml
-      OPEN_TERMINAL_ACP_AGENTS: '{"kiro":{"name":"Kiro","command":"kiro-cli acp"}}'
+Any agent that speaks ACP over stdio works, even if it's not in the list above (OpenClaw, Kiro, Droid and so on). Run `python DINC.py` and pick **ACP agents**, then add the agent with a short id, a display name, and the command that starts it in ACP mode (check the agent's docs for that). DINC.py saves it and restarts Open Terminal, and it shows up in the model picker as `acp-<id>/<model>`.
+
+The same menu handles a second copy of a built-in agent with a different setup. For example, Open Terminal's built-in Hermes always uses your default Hermes profile, so to chat with another profile, register it with the command `hermes --profile work acp`.
+
+Under the hood, DINC.py stores the list as JSON in `ACP_AGENTS` in `.env`, and `docker-compose.yml` passes it to Open Terminal as `OPEN_TERMINAL_ACP_AGENTS`. You can edit it by hand too, then run `docker compose up -d open-terminal`:
+```bash
+ACP_AGENTS='{"kiro":{"name":"Kiro","command":"kiro-cli acp"}}'
 ```
-Check the agent's docs for the command that starts it in ACP mode. It shows up in the model picker as `acp-<id>/<model>`.
 
 ### Hermes and other always-on agents
 Some agents, like Hermes, can also run as a long-lived assistant that you message from Telegram, Discord, Slack and other chat apps. You can set that up on the Open Terminal machine too, following the agent's own docs, and it will keep the same memory whether you talk to it there or in Open WebUI.
@@ -88,6 +91,7 @@ Run `python DINC.py` any time for the menu. It shows whether the stack is runnin
 - **Status:** shows every service and which migrations have run.
 - **Start, Stop, Restart, Logs:** the everyday docker compose commands, without having to remember them.
 - **Change OpenRouter key:** swaps your key in `.env` *and* in Open WebUI.
+- **ACP agents:** registers extra agents with Open Terminal, like ones it doesn't support out of the box or another Hermes profile (see [Any other ACP agent](#any-other-acp-agent)).
 
 Every menu item also works as a command, which is handy for scripts and cron. For example:
 ```bash
@@ -106,7 +110,7 @@ So when a new version of DINC needs to change something on an existing install, 
 | Path | What it does |
 | --- | --- |
 | `dinc/app.py` | The menu and the command line |
-| `dinc/commands/` | One file per area: install, update, status, services, settings. Register new commands in `commands/__init__.py`, which adds them to the menu and command line at once |
+| `dinc/commands/` | One file per area: install, update, status, services, settings, agents. Register new commands in `commands/__init__.py`, which adds them to the menu and command line at once |
 | `dinc/migrations/` | One file per migration (`m0003_short_name.py`). How to write one is explained at the top of `migrations/__init__.py` |
 | `dinc/openwebui.py` | Reads and changes Open WebUI settings inside the running container |
 | `dinc/compose.py`, `envfile.py`, `state.py` | docker compose, the `.env` file, and `dinc/state.db` |
